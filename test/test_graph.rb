@@ -1,4 +1,6 @@
+require 'pry'
 require 'test/unit'
+require 'yaml'
 require 'graph'
 
 class Graph_Algorithms < Test::Unit::TestCase
@@ -19,7 +21,14 @@ class Graph_Algorithms < Test::Unit::TestCase
 		g.add_edge('c','t',2,2)
 		g.add_edge('d','t',8,5)
 		
+		data = YAML.dump(g)
 		targetG = Graph_Util.solve_remaining_graph(g)
+		origG = YAML.load(data)
+
+		#测试原图在算法执行中未发生改变
+		assert_block do
+			g == origG
+		end
 
 		# 构造图16.1(b)
 		expectG = Graph.new
@@ -42,9 +51,13 @@ class Graph_Algorithms < Test::Unit::TestCase
 		expectG.add_edge('d','t',3)
 
 		assert_block do 
-			targetG == expectG
+			targetG.nodes.length == expectG.nodes.length
+			targetG.edges.length == expectG.edges.length
+
 		end
 
 
 	end
+
+	
 end
