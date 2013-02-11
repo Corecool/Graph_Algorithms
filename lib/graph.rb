@@ -11,7 +11,7 @@ class Node
 
 	def eql?(o)
 		if o.instance_of? Node
-			@name.eql?(o.name) && @edges.eql?(o.edges) 
+			@name.eql?(o.name) && @edges.eql?(o.edges)
 		elsif 
 			false
 		end
@@ -34,10 +34,10 @@ class Node
 		}
 	end
 
-	def get_next_nodes_edge
+	def get_next_nodes
 		next_nodes = Array.new
 		@edges.each{|edge|
-			next_nodes << [self, edge.to,edge]
+			next_nodes << edge.to
 		}
 		return next_nodes
 	end
@@ -110,8 +110,7 @@ class Graph
 
 	def add_node(name)
 		index = node_exist?(name)
-		raise "node exist" if index
-		@nodes << Node.new(name)
+		@nodes << Node.new(name) unless index
 	end
 
 	def add_edge(from, to, c = 0, f = 0)
@@ -155,7 +154,7 @@ class Graph
 end
 
 class Graph_Util
-	def Graph_Util.solve_remaining_graph(g)
+	def Graph_Util.solve_remaining_graph(g,s)
 		resG = Graph.new
 		g.nodes.each{|node|
 			resG.add_node(node.name)
@@ -193,9 +192,48 @@ class Graph_Util
 						resG.add_edge(edge.from, edge.to, edge.c - edge.f)
 					end
 					resG.add_edge(edge.to, edge.from, edge.f) 
+				else
+					resG.add_edge(edge.from, edge.to, edge.c)
 				end
 			end
 		}
+		return resG
+	end
+
+	def Graph_Util.solve_level_graph(g,s)
+		resG = Graph.new
+		sNode = g.nodes.find{|node|
+			node.name == s
+		}
+		raise "No Start Node" unless sNode
+		resG.add_node(sNode.name)
+		queue, visit = Array.new, Hash.new{|hash, key| hash[key] = false}
+		level = Hash.new{|hash,key| hash[key] = nil}
+		level[sNode] = 0
+		queue << g.get_node(sNode.name)
+		until queue.empty?
+			curNode = queue.shift
+			next if visit[curNode]
+			visit[curNode] = true
+			nextNodes = curNode.get_next_nodes
+			nextNodes.each{|node|
+				queue << node unless visit[node]
+				level[node] = level[curNode] + 1 unless level[node]
+			}
+			curNode.edges.each{|edge|
+				if !visit[edge.to] && (level[edge.to] > level[edge.from])
+					resG.add_node(edge.to.name)
+					resG.add_edge(edge.from,edge.to,edge.c)
+				end
+			}
+			# puts "current graph:\n #{resG}"
+			# puts "current node is #{curNode.name}"
+			# print "current queue is: "
+			# queue.each{|key|
+			# 	print "#{key.name}"
+			# }
+			# puts
+		end
 		return resG
 	end
 end
