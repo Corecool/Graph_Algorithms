@@ -27,14 +27,14 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		return true
 	end
 
-	def call_method(method,obj,s = 's')
-		data = YAML.dump(obj)
-		newObj = method.call(obj,s)
-		origObj = YAML.load(data)
+	def call_method(method,g,s = 's',t = 't')
+		data = YAML.dump(g)
+		newG = method.call(g,s,t)
+		origG = YAML.load(data)
 		assert_block do
-			obj == origObj
+			g == origG
 		end
-		return newObj
+		return newG
 	end
 
 
@@ -289,6 +289,104 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		end
 	end
 
+	def block_stream_case_0
+		# 构造图16.4(b) 输入层次图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',13)
+		g.add_edge('s','b',4)
+		g.add_edge('a','c',9)
+		g.add_edge('b','d',8)
+		g.add_edge('c','t',7)
+		g.add_edge('d','t',9)
+
+		method = Graph_Util.method(:"solve_block_stream")
+		targetG = call_method(method,g)
+
+		# 构造图16.4(c) 阻塞流
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',13,7)
+		expectG.add_edge('s','b',4,4)
+		expectG.add_edge('a','c',9,7)
+		expectG.add_edge('b','d',8,4)
+		expectG.add_edge('c','t',7,7)
+		expectG.add_edge('d','t',9,4)
+
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
+	def block_stream_case_1
+		# 构造图16.4(e) 输入层次图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',6)
+		g.add_edge('a','b',2)
+		g.add_edge('a','c',2)
+		g.add_edge('b','d',4)
+		g.add_edge('c','d',1)
+		g.add_edge('d','t',5)
+
+		method = Graph_Util.method(:"solve_block_stream")
+		targetG = call_method(method,g)
+
+		# 构造图16.4(f) 阻塞流
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',6,3)
+		expectG.add_edge('a','b',2,2)
+		expectG.add_edge('a','c',2,1)
+		expectG.add_edge('b','d',4,2)
+		expectG.add_edge('c','d',1,1)
+		expectG.add_edge('d','t',5,3)
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
+	def block_stream_case_2
+		# 构造图16.4(h) 输入层次图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',3)
+		g.add_edge('a','c',1)
+		g.add_edge('b','d',2)
+		g.add_edge('c','b',9)
+		g.add_edge('d','t',2)
+
+		method = Graph_Util.method(:"solve_block_stream")
+		targetG = call_method(method,g)
+
+		# 构造图16.4(i) 阻塞流
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',3,1)
+		expectG.add_edge('a','c',1,1)
+		expectG.add_edge('b','d',2,1)
+		expectG.add_edge('c','b',9,1)
+		expectG.add_edge('d','t',2,1)
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
 	public
 
 	# 测试剩余图构建
@@ -307,4 +405,11 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		}
 	end
 
+	# 测试阻塞流构建
+	def test_block_stream
+		self.private_methods(false).grep(
+			/block_stream_case_.+/).each{|name|
+			self.method(name.to_sym).call
+		}
+	end
 end

@@ -115,7 +115,9 @@ class Graph
 
 	def add_edge(from, to, c = 0, f = 0)
 		from_, to_ = get_node(from), get_node(to)
-		raise "no node" unless (from_ && to_)
+		if !(from_ && to_)
+			add_node(from_.name); add_node(to_.name)
+		end
 		raise "edge exist" if edge_exist?(from_,to_)
 		edge = Edge.new(from_, to_, c, f)
 		@edges << edge
@@ -139,6 +141,16 @@ class Graph
 		@nodes[index]
 	end
 
+	def get_edge(from, to)
+		from_, to_ = get_node(from), get_node(to)
+		return nil unless (from_ && to_)
+		index = @edges.index{|edge|
+			edge.from == from_ && edge.to == to_
+		}
+		return nil unless index
+		return @edges[index]
+	end
+
 	def node_exist?(name)
 		@nodes.index{|item| item.name == name}
 	end
@@ -146,7 +158,7 @@ class Graph
 	def edge_exist?(from, to)
 		from_, to_ = get_node(from), get_node(to)
 		return false unless (from_ && to_)
-		@edges.index{|edge|
+		@edges.find{|edge|
 			edge.from == from_ && edge.to == to_
 		}
 	end
@@ -154,7 +166,7 @@ class Graph
 end
 
 class Graph_Util
-	def Graph_Util.solve_remaining_graph(g,s)
+	def Graph_Util.solve_remaining_graph(g,s,t)
 		resG = Graph.new
 		g.nodes.each{|node|
 			resG.add_node(node.name)
@@ -166,7 +178,7 @@ class Graph_Util
 			visit[[edge.from, edge.to]] = true
 			# 如果对边存在且还未访问
 			if (g.edge_exist?(edge.to, edge.from) && !visit[[edge.to, edge.from]])
-				rEdge = g.edges[g.edge_exist?(edge.to,edge.from)]
+				rEdge = g.get_edge(edge.to,edge.from)
 				visit[[edge.to, edge.from]] = true
 				# 如果当前边有流
 				if edge.f != 0 && rEdge.f == 0
@@ -200,7 +212,7 @@ class Graph_Util
 		return resG
 	end
 
-	def Graph_Util.solve_level_graph(g,s)
+	def Graph_Util.solve_level_graph(g,s,t)
 		resG = Graph.new
 		sNode = g.nodes.find{|node|
 			node.name == s
@@ -226,15 +238,48 @@ class Graph_Util
 					resG.add_edge(edge.from,edge.to,edge.c)
 				end
 			}
-			# puts "current graph:\n #{resG}"
-			# puts "current node is #{curNode.name}"
-			# print "current queue is: "
-			# queue.each{|key|
-			# 	print "#{key.name}"
-			# }
-			# puts
 		end
 		return resG
+	end
+
+	def Graph_Util.solve_block_stream(g,s,t)
+		data = YAML.dump(g)
+		resG = YAML.load(data)
+
+		sNode = resG.nodes.find{|node|
+			node.name == s
+		}
+		raise "No Start Node" unless sNode
+		tNode = resG.nodes.find{|node|
+			node.name == t
+		}
+		raise "No End Node" unless tNode
+
+		tVisit = true
+		while tVisit
+			tVisit, path = false, Array.new
+			tVisit = dfs(resG,sNode,tNode,path)
+			if tVisit
+				minF = path.min { |a, b| a.c <=> b.c}.c
+				path.each{|edge| edge.f += minF} 
+			end
+		end
+
+		return resG
+	end
+
+	private
+	def Graph_Util.dfs(graph,sNode,tNode,path)
+		return true if sNode == tNode
+		sNode.get_next_nodes.each{|node|
+			edge = graph.get_edge(sNode, node)
+			if edge.r > 0
+				path << edge
+				return true if dfs(graph,node,tNode,path)
+			end
+		}
+		path.pop
+		return false
 	end
 end
 
