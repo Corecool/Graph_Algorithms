@@ -163,9 +163,33 @@ class Graph
 		}
 	end
 
+	def increase_stream!(g)
+		g.edges.each{|edge|
+			if edge.f > 0
+				e = get_edge(edge.from,edge.to)
+				e.f += edge.f
+			end
+		}
+		return self
+	end
 end
 
 class Graph_Util
+	def Graph_Util.dinic(g,s,t)
+		data = YAML.dump(g)
+		remainingG,streamG = YAML.load(data),YAML.load(data)
+		levelG = solve_level_graph(remainingG,s,t)
+		while levelG.node_exist?(t)
+			bsg = solve_block_stream(levelG,s,t)
+			streamG.increase_stream!(bsg)
+			remainingG = solve_remaining_graph(\
+				remainingG.increase_stream!(bsg),s,t)
+
+			levelG = solve_level_graph(remainingG,s,t)
+		end
+		return streamG
+	end
+
 	def Graph_Util.solve_remaining_graph(g,s,t)
 		resG = Graph.new
 		g.nodes.each{|node|

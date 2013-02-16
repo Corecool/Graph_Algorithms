@@ -387,6 +387,47 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		end
 	end
 
+	def dinic_case_0
+		# 构造图16.4(a) 输入图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',13)
+		g.add_edge('s','b',4)
+		g.add_edge('a','b',2)
+		g.add_edge('a','c',9)
+		g.add_edge('b','a',10)
+		g.add_edge('b','d',8)
+		g.add_edge('c','b',9)
+		g.add_edge('c','d',1)
+		g.add_edge('c','t',7)
+		g.add_edge('d','t',9)
+
+		method = Graph_Util.method(:dinic)
+		targetG = call_method(method,g)
+
+		# 构造图16.4(k) 最大流
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',13,11)
+		expectG.add_edge('s','b',4,4)
+		expectG.add_edge('a','b',2,2)
+		expectG.add_edge('a','c',9,9)
+		expectG.add_edge('b','a',10,0)
+		expectG.add_edge('b','d',8,7)
+		expectG.add_edge('c','b',9,1)
+		expectG.add_edge('c','d',1,1)
+		expectG.add_edge('c','t',7,7)
+		expectG.add_edge('d','t',9,8)
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
 	public
 
 	# 测试剩余图构建
@@ -409,6 +450,66 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 	def test_block_stream
 		self.private_methods(false).grep(
 			/block_stream_case_.+/).each{|name|
+			self.method(name.to_sym).call
+		}
+	end
+
+	# 测试增加流
+	def test_increase_stream
+		# 构造图16.4(a) 输入图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',13)
+		g.add_edge('s','b',4)
+		g.add_edge('a','b',2)
+		g.add_edge('a','c',9)
+		g.add_edge('b','a',10)
+		g.add_edge('b','d',8)
+		g.add_edge('c','b',9)
+		g.add_edge('c','d',1)
+		g.add_edge('c','t',7)
+		g.add_edge('d','t',9)
+
+		# 构造图16.4(c) 流图
+		streamG = Graph.new
+		streamG.add_node('s')
+		streamG.add_node('t')
+		('a'..'d').each{|item| streamG.add_node(item)}
+		streamG.add_edge('s','a',13,7)
+		streamG.add_edge('s','b',4,4)
+		streamG.add_edge('a','c',9,7)
+		streamG.add_edge('b','d',8,4)
+		streamG.add_edge('c','t',7,7)
+		streamG.add_edge('d','t',9,4)
+
+		g = g.increase_stream!(streamG)
+		targetG = g
+
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',13,7)
+		expectG.add_edge('s','b',4,4)
+		expectG.add_edge('a','b',2)
+		expectG.add_edge('a','c',9,7)
+		expectG.add_edge('b','a',10)
+		expectG.add_edge('b','d',8,4)
+		expectG.add_edge('c','b',9)
+		expectG.add_edge('c','d',1)
+		expectG.add_edge('c','t',7,7)
+		expectG.add_edge('d','t',9,4)
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
+	# 测试Dinic
+	def test_dinic
+		self.private_methods(false).grep(
+			/dinic_case_.+/).each{|name|
 			self.method(name.to_sym).call
 		}
 	end
