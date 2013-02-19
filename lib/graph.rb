@@ -172,6 +172,38 @@ class Graph
 		}
 		return self
 	end
+
+	def push_pull!(from, to, flow, pushOrPull)
+		from_, to_ = get_node(from), get_node(to)
+		return self if from_ == to_
+		edges = @edges.find_all{|edge|
+			if pushOrPull == :push
+				edge.from.name == from_.name && edge.r > 0 
+			elsif pushOrPull == :pull
+				edge.to.name == from_.name && edge.r > 0
+			end
+		}
+		return self if edges.empty?
+		edges.sort{|a,b| a.r <=> b.r}
+		while !edges.empty? && flow != 0
+			edge = edges.shift
+			if edge.r >= flow
+				edge.f += flow
+				push_pull!(edge.to, to, flow,pushOrPull) if pushOrPull == :push
+				push_pull!(edge.from, to, flow,pushOrPull) if pushOrPull == :pull
+				flow = 0
+				break
+			else
+				curFlow = edge.r
+				flow -= curFlow
+				edge.f = edge.c
+				push_pull!(edge.to, to, curFlow,pushOrPull) if pushOrPull == :push
+				push_pull!(edge.from, to, curFlow,pushOrPull) if pushOrPull == :pull
+			end
+		end
+		return self
+	end
+
 end
 
 class Graph_Util
@@ -266,6 +298,27 @@ class Graph_Util
 		return resG
 	end
 
+	def Graph_Util.solve_pp_stream(g,s,t)
+		data = YAML.dump(g)
+		resG = YAML.load(data)
+
+		sNode = resG.nodes.find{|node|
+			node.name == s
+		}
+		raise "No Start Node" unless sNode
+		tNode = resG.nodes.find{|node|
+			node.name == t
+		}
+		raise "No End Node" unless tNode
+
+		minNode,minT = compute_min_node(resG,s,t)
+		resG.push_pull!(minNode,tNode,minT,:push)
+		resG.push_pull!(minNode,sNode,minT,:pull)
+		return resG
+	end
+
+	
+
 	def Graph_Util.solve_block_stream(g,s,t)
 		data = YAML.dump(g)
 		resG = YAML.load(data)
@@ -304,6 +357,28 @@ class Graph_Util
 		}
 		path.pop
 		return false
+	end
+
+	def Graph_Util.compute_min_node(g,s,t)
+		minNode, minT = nil, nil
+		g.nodes.each{|node|
+			indegree,outdegree = 0,0
+			g.edges.each{|edge|
+				outdegree += edge.r if edge.from == node
+				indegree += edge.r if edge.to == node
+			}
+			curT = if node.name == s then outdegree
+			elsif node.name == t then indegree
+			else
+				indegree < outdegree ? indegree : outdegree
+			end
+			if minNode
+				minNode, minT = node, curT if curT < minT
+			else
+				minNode, minT = node, curT
+			end
+		}
+		return minNode, minT
 	end
 end
 

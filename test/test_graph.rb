@@ -289,6 +289,73 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		end
 	end
 
+	def push_pull_stream_case_0
+		# 构造图16.4(b) 输入层次图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',13)
+		g.add_edge('s','b',4)
+		g.add_edge('a','c',9)
+		g.add_edge('b','d',8)
+		g.add_edge('c','t',7)
+		g.add_edge('d','t',9)
+
+		method = Graph_Util.method(:"solve_pp_stream")
+		targetG = call_method(method,g)
+
+		# 构造输出流图
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',13)
+		expectG.add_edge('s','b',4,4)
+		expectG.add_edge('a','c',9)
+		expectG.add_edge('b','d',8,4)
+		expectG.add_edge('c','t',7)
+		expectG.add_edge('d','t',9,4)
+
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
+	def push_pull_stream_case_1
+		# 构造图16.4(e) 输入层次图
+		g = Graph.new
+		g.add_node('s')
+		g.add_node('t')
+		('a'..'d').each{|item| g.add_node(item)}
+		g.add_edge('s','a',6)
+		g.add_edge('a','b',2)
+		g.add_edge('a','c',2)
+		g.add_edge('b','d',4)
+		g.add_edge('c','d',1)
+		g.add_edge('d','t',5)
+
+		method = Graph_Util.method(:"solve_pp_stream")
+		targetG = call_method(method,g)
+
+		# 构造输出流图
+		expectG = Graph.new
+		expectG.add_node('s')
+		expectG.add_node('t')
+		('a'..'d').each{|item| expectG.add_node(item)}
+		expectG.add_edge('s','a',6,1)
+		expectG.add_edge('a','b',2)
+		expectG.add_edge('a','c',2,1)
+		expectG.add_edge('b','d',4)
+		expectG.add_edge('c','d',1,1)
+		expectG.add_edge('d','t',5,1)
+
+		assert_block do 
+			compare_graph(expectG,targetG)
+		end
+	end
+
 	def block_stream_case_0
 		# 构造图16.4(b) 输入层次图
 		g = Graph.new
@@ -504,6 +571,14 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		assert_block do 
 			compare_graph(expectG,targetG)
 		end
+	end
+
+	# 测试MPM流推拉
+	def test_push_pull_stream
+		self.private_methods(false).grep(
+			/push_pull_stream_case_.+/).each{|name|
+			self.method(name.to_sym).call
+		}
 	end
 
 	# 测试Dinic
