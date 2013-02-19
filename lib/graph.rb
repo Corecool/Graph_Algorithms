@@ -28,9 +28,9 @@ class Node
 		@edges << edge
 	end
 
-	def delete_edge(to)
+	def remove_edge!(to)
 		@edges.delete_if{|edge|
-			edge.to == to
+			edge.to.name == to.name
 		}
 	end
 
@@ -41,7 +41,6 @@ class Node
 		}
 		return next_nodes
 	end
-	
 	
 
 end
@@ -66,11 +65,8 @@ class Edge
 	end
 
 	def to_s
-		puts "edge is from #{@from.name} to #{@to.name}"
-		puts "edge's c is #{@c}"
-		puts "edge's f is #{@f}"
-		puts "edge's r is #{@r}"
-		puts
+		print "edge is from #{@from.name} to #{@to.name}: "
+		puts "#{@c} #{@f} #{@r}"
 	end
 
 	def eql?(o)
@@ -204,6 +200,14 @@ class Graph
 		return self
 	end
 
+	def remove_node!(node)
+		@edges.delete_if{|edge|
+			edge.from.name == node.name || edge.to.name == node.name
+		}
+		@nodes.delete_if{|n| node.name == n.name}
+		@nodes.each{|n| n.remove_edge!(node)}
+		return self
+	end
 end
 
 class Graph_Util
@@ -217,6 +221,27 @@ class Graph_Util
 			remainingG = solve_remaining_graph(\
 				remainingG.increase_stream!(bsg),s,t)
 
+			levelG = solve_level_graph(remainingG,s,t)
+		end
+		return streamG
+	end
+
+	def Graph_Util.mpm(g,s,t)
+		data = YAML.dump(g)
+		remainingG,streamG = YAML.load(data),YAML.load(data)
+		levelG = solve_level_graph(remainingG,s,t)
+		while levelG.node_exist?(t)
+			sNode = levelG.nodes.find{|node| node.name == s}
+			tNode = levelG.nodes.find{|node| node.name == t}
+			while dfs(levelG,sNode,tNode,[])
+				pps = solve_pp_stream(levelG,s,t)
+				streamG.increase_stream!(pps)
+				remainingG = solve_remaining_graph(\
+					remainingG.increase_stream!(pps),s,t)
+				levelG = solve_level_graph(remainingG,s,t)
+				sNode = levelG.nodes.find{|node| node.name == s}
+				tNode = levelG.nodes.find{|node| node.name == t}
+			end
 			levelG = solve_level_graph(remainingG,s,t)
 		end
 		return streamG
@@ -312,6 +337,10 @@ class Graph_Util
 		raise "No End Node" unless tNode
 
 		minNode,minT = compute_min_node(resG,s,t)
+		while minT == 0
+			resG.remove_node!(minNode)
+			minNode,minT = compute_min_node(resG,s,t)
+		end
 		resG.push_pull!(minNode,tNode,minT,:push)
 		resG.push_pull!(minNode,sNode,minT,:pull)
 		return resG
