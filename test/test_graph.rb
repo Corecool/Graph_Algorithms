@@ -1,7 +1,9 @@
+$: << File.dirname(__FILE__) 
 require 'pry'
 require 'test/unit'
 require 'yaml'
 require 'graph'
+require 'graph_util'
 
 class Test_Graph_Algorithms < Test::Unit::TestCase
 	private
