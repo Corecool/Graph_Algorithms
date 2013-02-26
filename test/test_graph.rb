@@ -1,4 +1,5 @@
 $: << File.dirname(__FILE__) 
+
 require 'pry'
 require 'test/unit'
 require 'yaml'
@@ -495,6 +496,11 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		assert_block do 
 			compare_graph(expectG,targetG)
 		end
+		# puts "Test Dinic Algorithm:"
+		# puts "Input:"
+		# puts g
+		# puts "Output:"
+		# puts targetG
 	end
 
 	def mpm_case_0
@@ -536,6 +542,41 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		assert_block do 
 			compare_graph(expectG,targetG)
 		end
+
+		# puts "Test MPM Algorithm:"
+		# puts "Input:"
+		# puts g
+		# puts "Output:"
+		# puts targetG
+	end
+
+	def bimatch_case_0
+		# 构造输入图（无向图）
+		g = Graph.new
+		('a'..'f').each{|item| g.add_node(item)}
+		g.add_edge('a','b')
+		g.add_edge('a','d')
+		g.add_edge('b','a')
+		g.add_edge('b','c')
+		g.add_edge('b','e')
+		g.add_edge('c','b')
+		g.add_edge('c','f')
+		g.add_edge('d','a')
+		g.add_edge('d','e')
+		g.add_edge('e','b')
+		g.add_edge('e','d')
+		g.add_edge('e','f')
+		g.add_edge('f','c')
+		g.add_edge('f','e')
+
+		x = Hash.new{|hash,key| hash[key] = false}
+		y = Hash.new{|hash,key| hash[key] = false}
+		x['a'] = x['c'] = x['e'] = true
+		y['b'] = y['d'] = y['f'] = true
+		maxMatch = Graph_Util.bimatch(g,x,y)
+
+		assert_equal(3, maxMatch)
+
 	end
 
 	public
@@ -614,6 +655,14 @@ class Test_Graph_Algorithms < Test::Unit::TestCase
 		assert_block do 
 			compare_graph(expectG,targetG)
 		end
+	end
+
+	# 测试二分图最大匹配算法
+	def test_bimatch
+		self.private_methods(false).grep(
+			/bimatch_case_.+/).each{|name|
+			self.method(name.to_sym).call
+		}
 	end
 
 	# 测试MPM流推拉算法

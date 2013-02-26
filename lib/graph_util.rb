@@ -164,6 +164,27 @@ class Graph_Util
 		return resG
 	end
 
+	def Graph_Util.bimatch(g,x,y)
+		data = YAML.dump(g)
+		resG = YAML.load(data)
+
+		g.edges.each{|edge|
+			resG.remove_edge!(edge.from, edge.to) \
+			if y.key?(edge.from.name) && x.key?(edge.to.name)
+		}
+		resG.add_node('s');resG.add_node('t')
+		g.nodes.each{|node|
+			resG.add_edge('s',node.name) if x.key? node.name
+			resG.add_edge(node.name,'t') if y.key? node.name
+		}
+		resG.edges.each{|edge| edge.c = 1}
+		streamG = dinic(resG,'s','t')
+		streamG.remove_node!('s');streamG.remove_node!('t')
+		maxMatch = streamG.edges.reduce(0){|sum,edge|
+			sum + edge.f
+		}
+	end 
+
 	private
 	def Graph_Util.dfs(graph,sNode,tNode,path)
 		return true if sNode == tNode

@@ -66,7 +66,7 @@ class Edge
 
 	def to_s
 		print "edge is from #{@from.name} to #{@to.name}: "
-		puts "#{@c} #{@f} #{@r}"
+		puts "c is #{@c}, f is #{@f}, r is #{@r}"
 	end
 
 	def eql?(o)
@@ -201,6 +201,7 @@ class Graph
 	end
 
 	def remove_node!(node)
+		node = get_node(node) if node.class == String
 		@edges.delete_if{|edge|
 			edge.from.name == node.name || edge.to.name == node.name
 		}
@@ -208,6 +209,16 @@ class Graph
 		@nodes.each{|n| n.remove_edge!(node)}
 		return self
 	end
+
+	def remove_edge!(from,to)
+		from_, to_ = get_node(from), get_node(to)
+		@edges.delete_if{|edge|
+			edge.from == from_ && edge.to == to_
+		}
+		from_.remove_edge!(to_)
+		return self
+	end
+
 end
 
 
